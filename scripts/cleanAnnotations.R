@@ -54,14 +54,15 @@ original_path <- (here::here("input/"))
       # Convert degrees and minutes to numeric
       mutate(across(c(degrees, minutes), as.numeric)) %>%
       # Convert minutes to decimal and calculate final decimal degrees
-      mutate(Latitude = (degrees + minutes) / 60) %>%
+      mutate(Latitude = degrees +(minutes / 60))%>%
+    
     mutate(Longd_m = str_extract(all_data$Long,"(?<=N|S|E|W)\\d+ \\d+\\.\\d+"))    %>%
       # Split into separate degree and minute columns
       separate(Longd_m, into = c("degrees", "minutes"), sep = " ") %>%
       # Convert degrees and minutes to numeric
-      mutate(across(c(degrees, minutes), as.numeric)) %>%
+      mutate(across(c(degrees, minutes), as.numeric))%>%
       # Convert minutes to decimal and calculate final decimal degrees
-      mutate(Longitude = ((degrees + minutes) / 60*(-1)) %>%select(-degrees, -minutes)
+      mutate(Longitude = ((degrees + (minutes / 60))*-1)) %>%select(-degrees, -minutes)
     
     #########
     #data summaries of analyses to date------

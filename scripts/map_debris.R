@@ -6,14 +6,15 @@ pacman::p_load(sp, terra, dplyr, sf, viridis, ggplot2, ggrepel, stringr,
                here, ggtext, readr,
                pals, tidyr, fuzzyjoin, 
                patchwork,mapsf,readxl,
-               ggforce, readr, ggspatial, lubridate, stars, patchwork, scales, 
+               ggforce, readr, ggspatial, lubridate, stars, scales, 
                RColorBrewer, grafify)
 
 shapefiles ="~/CODE/shapefiles/"
 
 debris_2022 = all_data%>%filter(!is.na(Lat))%>%st_as_sf(coords = c("Longitude", "Latitude"), crs = 4326)
+write_sf(debris_2022, "output/debris_2022.shp")
 
-#read eez shapefile----
+#read shapefiles----
 EEZ <- read_sf(paste0(shapefiles, "EEZ/EEZ_can.shp"))
 
 ##MPAs & conservation zones compiled from layers available as shapefiles -------
@@ -27,19 +28,17 @@ Gully <- read_sf(paste0(shapefiles,"ProtectedAreas/DFO/Gully/Gully_MPA.shp"))%>%
 
 # Get the vertical and horizontal limits
 
+# make bound box around data-----
+Bound_boxB <- st_bbox( c(xmin = -60.2,ymin = 42.5, xmax = -56, ymax =45 ), crs = st_crs(4326))
+Bound_boxB <- Bound_boxB %>%
+  st_as_sfc()%>% #turns the bounding box into a sfc object, that just describes a specific geometry
+  st_sf()
+Bound_boxv = vect(Bound_boxB)
 
-
-# Get x and y limits
-lims <- list(
-  x = c(xmin = -59.137359-1, xmax = -57.88472222+1),
-  y = c(ymin = 43.69995-1, ymax = 44.3027777800001+1)
+lims = lims <- list(
+  x = c(xmin = -60.2, xmax = -56),
+  y = c(ymin = 42.5, ymax = 45)
 )
-xmin <- -59.137359 -1
-xmax <- -57.88472222+1
-ymin <- 43.69995-1
-ymax <- 44.3027777800001+1
-
-ext <- terra::vect(c(xmin, xmax, ymin, ymax), crs="+proj=longlat")  # Specify the CRS if known, otherwise WGS84 is assumed
 
 # bathy data -------
 
@@ -52,12 +51,12 @@ r <- terra::rast(paste(shapefiles,"Bathymetry/GEBCO_bathy/gebco_2020.tif", sep =
 bathy = terra::aggregate(r, fact = 2)
 
 #now crop to extent of study area
-bathy_crop = crop(bathy, ext)
+bathy_crop = crop(bathy, Bound_boxv)
 
 bathy_crop <- as.data.frame(bathy_crop, xy = T)%>%dplyr::rename(Depth = gebco_2020)%>%
   mutate(Depth = ifelse(Depth >=-10, NA, Depth))
 
-plot(bathy_crop)
+# plot(bathy_crop)
 
 # north america for reference------
 
@@ -89,8 +88,12 @@ m1 = ggplot() +
   geom_sf(data = NBW_CH, col = "#a6f4dc", fill = NA, alpha = .5, linewidth = .5)+
   
   
-  #add plastic surveys
+  #add ROV annotated surveys
   geom_sf(data = st_jitter(debris_2022, factor = .01), col = "orange", shape = 17, fill = "orange",
+          alpha = .7,
+          size = 3) +
+  
+  geom_sf(data = st_jitter(gearNoted_sf, factor = .01), col = "red", shape = 17, fill = "red",
           alpha = .7,
           size = 3) +
   
@@ -101,28 +104,30 @@ m1 = ggplot() +
   annotation_scale(
     location = "br",
     width_hint = 0.25,
-    text_cex = 0.85,
+    text_cex = 0.85,line_col = "white", 
     bar_cols = c("grey40", "white"))+
   # set map limits
   coord_sf(lims_method = "orthogonal",
-           xlim=lims$x, ylim=lims$y, expand = T)
+           xlim=lims$x, ylim=lims$y, expand = F)
 m1
 
-###ALL IN UTM-----
-  
-  
-  #annotate GuLLY
-  annotate(geom = "text", x = 320799.125, y = 4846790.387, label = "The Gully",fontface = "bold.italic",
-           color = "black", size = 4, ) +
-  # add text annotation for canyons
-  annotate(geom = "text", x = 429482.244, y = 4875581.286, label = "Haldimand",fontface = "bold.italic",
-           color = "black", size = 4, ) +
-  annotate(geom = "text", x = 395633.360, y = 4863808.839, label = "Shortland",fontface = "bold.italic",
-           color = "black", size = 4, )+
+ggsave("output/mapROV.png", m1, dpi = 300)
 
-  )
-
-#plot                    
-m1 = m1+# unnecessary spacing in the final plot arrangement.
-  theme(plot.margin = margin(0, 0, 0, .1), plot.title = element_text(hjust=0.5), 
-        plot.subtitle  = element_text(hjust=0.5), axis.title = element_blank())
+# ###ALL IN UTM-----
+#   
+#   
+#   #annotate GuLLY
+#   annotate(geom = "text", x = 320799.125, y = 4846790.387, label = "The Gully",fontface = "bold.italic",
+#            color = "black", size = 4, ) +
+#   # add text annotation for canyons
+#   annotate(geom = "text", x = 429482.244, y = 4875581.286, label = "Haldimand",fontface = "bold.italic",
+#            color = "black", size = 4, ) +
+#   annotate(geom = "text", x = 395633.360, y = 4863808.839, label = "Shortland",fontface = "bold.italic",
+#            color = "black", size = 4, )+
+# 
+#   )
+# 
+# #plot                    
+# m1 = m1+# unnecessary spacing in the final plot arrangement.
+#   theme(plot.margin = margin(0, 0, 0, .1), plot.title = element_text(hjust=0.5), 
+#         plot.subtitle  = element_text(hjust=0.5), axis.title = element_blank())
