@@ -1,7 +1,7 @@
 # Read in dive survey Nav csvs and map dive locations
 
 #LIBRARIES------------
-pacman::p_load(data.table, dplyr, readxl, purrr, readr, tidyr, stringr)
+pacman::p_load(data.table, dplyr, readxl, purrr, readr, tidyr, stringr, lubridate, sf)
 
 # Set the path to folder of waypoint notes containing the CSV files
 path_to_csvs <- "input/waypoints/"
@@ -21,11 +21,11 @@ gearNoted = gearNoted %>%
 summary(gearNoted)
 
 #write shapefile
-gearNoted_sf = gearNoted%>%st_as_sf(coords = c("Long", "Lat"), crs = 4326)
-write_sf(gearNoted_sf, "output/gearNotedlive_sf.shp")
+# gearNoted_sf = gearNoted%>%st_as_sf(coords = c("Long", "Lat"), crs = 4326)
+# write_sf(gearNoted_sf, "output/gearNotedlive_sf.shp")
 
 #write csv
-write_csv(gearNoted_sf%>%st_drop_geometry(), "output/gearNotedlive.csv")
+# write_csv(gearNoted_sf%>%st_drop_geometry(), "output/gearNotedlive.csv")
 
 
 
@@ -48,18 +48,24 @@ ROV_NAV <- map(csv_files, clean_and_read_csv)%>%bind_rows()
 ROV_NAV = ROV_NAV %>%select(1:4, 14:15)%>%rename(DateTime = `timestamp (utc)`, Lat = `latitude (4326)`, Long = `longitude (4326)`, 
                                                     Depth = `depth (m)`, Date = `timestamp (utc)...1`, Time = `timestamp (utc)...2` )
   
-ROV_NAV = ROV_NAV%>%mutate(DateT = as.POSIXct(DateTime, TZ = "UTC", format ="%m/%d/%Y %H:%M"))
+ROV_NAV = ROV_NAV%>%mutate(DateT = as.POSIXct(DateTime, TZ = "UTC", format ="%m/%d/%Y %H:%M"))%>%
+  mutate(DT = as.POSIXct(paste(Date, Time, sep = " "), TZ = "UTC", format ="%m/%d/%Y %H:%M:%S"))%>% 
+  mutate(DateUTC = case_when(
+  is.na(DateT) ~ DT,    # If 'DateT' is NA, use 'DT'
+  TRUE ~ DateT         # Otherwise, use 'DateT'
+))%>%select(-DT, -DateT)%>%filter(!is.na(Lat))
 
-ROV_NAV = ROV_NAV%>%distinct( Date, .keep_all = TRUE)
+
+ROV_NAV = ROV_NAV%>%distinct(hour = round_date(DateUTC,"hour"), .keep_all = TRUE)%>%mutate(DatT = as.character(hour))
 
 # filter(str_detect(Sample, regex("(fish|rope|trawl)", ignore_case = TRUE)))
 
 
 summary(ROV_NAV)
 
-#write shapefile
-gearNoted_sf = gearNoted%>%st_as_sf(coords = c("Long", "Lat"), crs = 4326)
-write_sf(gearNoted_sf, "output/gearNotedlive_sf.shp")
+# #write shapefile
+# ROV_NAV_sf = ROV_NAV%>%select(DatT, Depth, Lat, Long)%>%st_as_sf(coords = c("Long", "Lat"), crs = 4326)
+# write_sf(ROV_NAV_sf, "output/ROV_NAV_sf.shp")
 
 #write csv
-write_csv(gearNoted_sf%>%st_drop_geometry(), "output/gearNotedlive.csv")
+write_csv(ROV_NAV%>%select(DatT, Depth, Lat, Long), "output/gearNotedlive.csv")
