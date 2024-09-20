@@ -92,7 +92,7 @@ original_path <- (here::here("input/"))
   
  time%>%group_by(Complete)%>% summarise(hrs_total = sum(hours))
  
- 22.3/(22.3+54.01667)
+ 31.76/(31.76+44.55)
   
     
 
