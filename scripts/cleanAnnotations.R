@@ -45,7 +45,8 @@ original_path <- (here::here("input/"))
     summary(all_data)
     
 #create var for the surveys that have been annotated
-    all_data = all_data%>%mutate(Debris_ID = as.factor(`Debris #`), Type = as.factor(`Litter Type (ICES)`),Reviewed = ifelse(is.na(Debris_ID), "NO", "YES"))
+    all_data = all_data%>%mutate(Debris_ID = as.factor(Debris_Num), Type = as.factor(Litter_Type),
+                                 Reviewed = ifelse(is.na(Debris_ID), "NO", "YES"))
     
     all_data<-all_data  %>% # pipe - create a sequence of data cleaning operations 
          mutate(Latd_m = str_extract(all_data$Lat,"(?<=N|S|E|W)\\d+ \\d+\\.\\d+"))%>%
@@ -68,11 +69,14 @@ original_path <- (here::here("input/"))
     #data summaries of analyses to date------
     all_data%>%group_by(Reviewed)%>%dplyr::summarise(Processed = n())
 
-    #April 11 = 36% of videos reviewed
-    67/(67+110)
+    # #April 11 = 36% of videos reviewed
+    # 67/(67+110)
+    
+    #September 19 = 56% reviewed
+    109/(109+87)
     
     
-    #check which have debris annotations  - 27 unique items of debris observed across 35 observations, majority plastic 
+    #check which have debris annotations  - 39 unique items of debris observed across 32 observations, majority plastic 
     videos = all_data%>%group_by(Survey, Debris_ID, Type) %>%dplyr::summarise(Debris_unique = n( ))
     videos%>%group_by(Survey, Debris_ID) %>%dplyr::summarise(surveys = n( ))%>%na.omit()%>%summarise()
 

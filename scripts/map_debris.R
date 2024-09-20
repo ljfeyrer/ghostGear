@@ -11,8 +11,8 @@ pacman::p_load(sp, terra, dplyr, sf, viridis, ggplot2, ggrepel, stringr,
 
 shapefiles ="~/CODE/shapefiles/"
 # 
-# debris_2022 = all_data%>%filter(!is.na(Lat))%>%st_as_sf(coords = c("Longitude", "Latitude"), crs = 4326)
-# write_sf(debris_2022, "output/debris_2022.shp")
+debris_2022 = all_data%>%filter(!is.na(Lat))%>%st_as_sf(coords = c("Longitude", "Latitude"), crs = 4326)
+write_sf(debris_2022, "output/debris_2022.shp")
 
 
 

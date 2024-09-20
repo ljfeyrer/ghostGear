@@ -21,11 +21,11 @@ gearNoted = gearNoted %>%
 summary(gearNoted)
 
 #write shapefile
-# gearNoted_sf = gearNoted%>%st_as_sf(coords = c("Long", "Lat"), crs = 4326)
-# write_sf(gearNoted_sf, "output/gearNotedlive_sf.shp")
+gearNoted_sf = gearNoted%>%st_as_sf(coords = c("Long", "Lat"), crs = 4326)
+write_sf(gearNoted_sf, "output/gearNotedlive_sf.shp")
 
-#write csv
-# write_csv(gearNoted_sf%>%st_drop_geometry(), "output/gearNotedlive.csv")
+# write csv
+write_csv(gearNoted_sf%>%st_drop_geometry(), "output/gearNotedlive.csv")
 
 
 
@@ -64,8 +64,8 @@ ROV_NAV = ROV_NAV%>%distinct(hour = round_date(DateUTC,"hour"), .keep_all = TRUE
 summary(ROV_NAV)
 
 # #write shapefile
-# ROV_NAV_sf = ROV_NAV%>%select(DatT, Depth, Lat, Long)%>%st_as_sf(coords = c("Long", "Lat"), crs = 4326)
-# write_sf(ROV_NAV_sf, "output/ROV_NAV_sf.shp")
+ROV_NAV_sf = ROV_NAV%>%select(DatT, Depth, Lat, Long)%>%st_as_sf(coords = c("Long", "Lat"), crs = 4326)
+write_sf(ROV_NAV_sf, "output/ROV_NAV_sf.shp")
 
 #write csv
 write_csv(ROV_NAV%>%select(DatT, Depth, Lat, Long), "output/gearNotedlive.csv")
